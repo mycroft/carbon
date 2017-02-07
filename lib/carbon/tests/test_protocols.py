@@ -15,6 +15,14 @@ import time
 
 
 class TestMetricReceiversHandler(TestCase):
+
+  def setUp(self):
+    super(TestMetricReceiversHandler, self).setUp()
+    class _FakeService(object):
+      def addService(_, __):
+        pass
+    self.fake_service = _FakeService()
+
   def test_build(self):
     # amqp not supported with py3
     if version_info >= (3, 0):
@@ -35,13 +43,19 @@ class TestMetricReceiversHandler(TestCase):
     plugins = sorted(MetricReceiver.plugins.keys())
     self.assertEquals(expected_plugins, plugins)
 
-    class _FakeService(object):
-      def addService(_, __):
-        pass
-    fake_service = _FakeService()
-
     for plugin_name, plugin_class in MetricReceiver.plugins.items():
-      plugin_class.build(fake_service)
+      plugin_class.build(self.fake_service)
+
+  def test_build_with_traffic_shaping(self):
+    settings = {
+      'ENABLE_TRAFFIC_SHAPING': True
+    }
+    settings_patch = patch.dict('carbon.conf.settings', settings)
+    settings_patch.start()
+    try:
+      MetricReceiver.plugins['line'].build(self.fake_service)
+    finally:
+      settings_patch.stop()
 
 
 class TestMetricReceiver(TestCase):
