@@ -2,19 +2,50 @@ import time
 import socket
 import sys
 
-from twisted.internet.protocol import ServerFactory, DatagramProtocol
 from twisted.application.internet import TCPServer, UDPServer
 from twisted.application import service
 from twisted.internet.error import ConnectionDone
 from twisted.internet import reactor, tcp, udp
+from twisted.internet.protocol import ServerFactory, DatagramProtocol
 from twisted.protocols.basic import LineOnlyReceiver, Int32StringReceiver
 from twisted.protocols.policies import TimeoutMixin
+from twisted.protocols.htb import ShapedProtocolFactory, Bucket, HierarchicalBucketFilter
+
 from carbon import log, events, state, management
 from carbon.conf import settings
 from carbon.regexlist import WhiteList, BlackList
-from carbon.util import pickle, get_unpickler
 from carbon.util import PluginRegistrar
 from six import with_metaclass
+from carbon.util import pickle, get_unpickler
+
+
+class _FilterByPeer(HierarchicalBucketFilter):
+  """
+  A Hierarchical Bucket filter with a L{Bucket} for each host.
+  """
+  sweepInterval = 60 * 5
+
+  def getBucketKey(self, transport):
+    return transport.getPeer().host
+
+
+_HtbFilter = None
+def HtbFilter():
+  from carbon.conf import settings
+
+  if not settings.ENABLE_TRAFFIC_SHAPING:
+    return None
+
+  global _HtbFilter
+  if _HtbFilter is None:
+    class _TcpBucket(Bucket):
+      rate = settings.TRAFFIC_SHAPING_RATE
+      maxburst = settings.TRAFFIC_SHAPING_MAX_BURST
+
+    _HtbFilter = _FilterByPeer()
+    _HtbFilter.bucketFactory = _TcpBucket
+
+  return _HtbFilter
 
 
 class CarbonReceiverFactory(ServerFactory):
@@ -83,7 +114,11 @@ class CarbonServerProtocol(with_metaclass(PluginRegistrar, object)):
       service = CarbonService(interface, port, protocol, None)
     else:
       factory = CarbonReceiverFactory()
-      factory.protocol = protocol
+      htb_filter = HtbFilter()
+      if htb_filter is not None:
+        factory.protocol = ShapedProtocolFactory(protocol, htb_filter)
+      else:
+        factory.protocol = protocol
       service = CarbonService(interface, port, protocol, factory)
     service.setServiceParent(root_service)
 
