@@ -17,6 +17,7 @@ from carbon.regexlist import WhiteList, BlackList
 from carbon.util import PluginRegistrar
 from six import with_metaclass
 from carbon.util import pickle, get_unpickler
+from carbon.util import enableTcpKeepAlive
 
 
 class _FilterByPeer(HierarchicalBucketFilter):
@@ -151,7 +152,9 @@ class MetricReceiver(CarbonServerProtocol, TimeoutMixin):
 
   def connectionMade(self):
     self.setTimeout(settings.METRIC_CLIENT_IDLE_TIMEOUT)
+    enableTcpKeepAlive(self.transport)
     self.peerName = self.getPeerName()
+
     if settings.LOG_LISTENER_CONN_SUCCESS:
       log.listener("%s connection with %s established" % (
         self.__class__.__name__, self.peerName))
