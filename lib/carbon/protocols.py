@@ -33,8 +33,6 @@ class _FilterByPeer(HierarchicalBucketFilter):
 
 _HtbFilter = None
 def HtbFilter():
-  from carbon.conf import settings
-
   if not settings.ENABLE_TRAFFIC_SHAPING:
     return None
 
