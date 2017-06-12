@@ -4,6 +4,7 @@ from six import with_metaclass
 
 from twisted.application.service import Service
 from twisted.internet import reactor
+from twisted.internet.base import BlockingResolver
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.protocols.basic import LineOnlyReceiver, Int32StringReceiver
@@ -33,6 +34,8 @@ try:
 except ImportError:
     setUpRandomResolver = None
 
+
+resolver = BlockingResolver()
 
 SEND_QUEUE_LOW_WATERMARK = settings.MAX_QUEUE_SIZE * settings.QUEUE_LOW_WATERMARK_PCT
 
@@ -222,6 +225,7 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
     self.router = router
     self.destinationName = ('%s:%d:%s' % destination).replace('.', '_')
     self.host, self.port, self.carbon_instance = destination
+    self.resolved_host = self.host
     self.addr = (self.host, self.port)
     self.started = False
     # This factory maintains protocol state across reconnects
@@ -279,6 +283,17 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
   def startConnecting(self):  # calling this startFactory yields recursion problems
     self.started = True
 
+    if settings['DESTINATION_POOL_REPLICAS']:
+      # If we decide to open multiple TCP connection to a replica, we probably
+      # want to try to also load-balance accross hosts.
+      d = resolver.getHostByName(self.host, timeout=1)
+
+      def _store_result(result):
+        log.clients("Resolved %s to %s" % (self.host, result))
+        self.resolved_host = result
+
+      d.addCallback(_store_result)
+      d.addErrback(log.err)
     if settings['DESTINATION_TRANSPORT'] == "ssl":
        if not SSL or not ssl:
            print("SSL destination transport request, but no Python OpenSSL available.")
@@ -294,12 +309,14 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
        # Twisted 14 introduced this function, it might not be around on older installs.
        if hasattr(ssl, "optionsForClientTLS"):
            from six import u
-           client = ssl.optionsForClientTLS(u(self.host), authority)
+           client = ssl.optionsForClientTLS(u(self.resolved_host), authority)
        else:
            client = CAReplaceClientContextFactory(settings['DESTINATION_SSL_CA'])
-       self.connector = reactor.connectSSL(self.host, self.port, self, client)
+       self.connector = reactor.connectSSL(self.resolved_host, self.port, self, client)
     else:
-      self.connector = reactor.connectTCP(self.host, self.port, self)
+      self.connector = reactor.connectTCP(self.resolved_host, self.port, self)
+    
+    
 
   def stopConnecting(self):
     self.started = False
