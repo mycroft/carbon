@@ -283,7 +283,7 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
   def startConnecting(self):  # calling this startFactory yields recursion problems
     self.started = True
 
-    if settings['DESTINATION_POOL_REPLICAS']:
+    if settings.DESTINATION_POOL_REPLICAS:
       # If we decide to open multiple TCP connection to a replica, we probably
       # want to try to also load-balance accross hosts.
       d = resolver.getHostByName(self.host, timeout=1)
