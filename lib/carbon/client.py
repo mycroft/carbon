@@ -115,11 +115,10 @@ class CarbonClientProtocol(object):
     if not self.factory.hasQueuedDatapoints():
       return
 
-    if settings.USE_RATIO_RESET is True:
-      if not self.connectionQualityMonitor():
-        self.resetConnectionForQualityReasons("Sent: {0}, Received: {1}".format(
-          instrumentation.prior_stats.get(self.sent, 0),
-          instrumentation.prior_stats.get('metricsReceived', 0)))
+    if not self.connectionQualityMonitor():
+      self.resetConnectionForQualityReasons("Sent: {0}, Received: {1}".format(
+        instrumentation.prior_stats.get(self.sent, 0),
+        instrumentation.prior_stats.get('metricsReceived', 0)))
 
     self.sendDatapointsNow(self.factory.takeSomeFromQueue())
     if (self.factory.queueFull.called and queueSize < SEND_QUEUE_LOW_WATERMARK):
@@ -142,8 +141,16 @@ class CarbonClientProtocol(object):
 
     False means that quality is bad
     """
+    if not settings.USE_RATIO_RESET:
+      return True
+
+    if settings.DESTINATION_POOL_REPLICAS:
+        received = self.factory.attemptedRelays
+    else:
+        received = 'metricsReceived'
+
     destination_sent = float(instrumentation.prior_stats.get(self.sent, 0))
-    total_received = float(instrumentation.prior_stats.get('metricsReceived', 0))
+    total_received = float(instrumentation.prior_stats.get(received, 0))
     instrumentation.increment(self.slowConnectionReset, 0)
     if total_received < settings.MIN_RESET_STAT_FLOW:
       return True
@@ -240,7 +247,7 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
   def startConnecting(self):  # calling this startFactory yields recursion problems
     self.started = True
 
-    if settings['DESTINATION_POOL_REPLICAS']:
+    if settings.DESTINATION_POOL_REPLICAS:
       # If we decide to open multiple TCP connection to a replica, we probably
       # want to try to also load-balance accross hosts.
       d = resolver.getHostByName(self.host, timeout=1)
@@ -573,7 +580,7 @@ class CarbonClientManager(Service):
 
   def getFactories(self, metric):
     destinations = self.getDestinations(metric)
-    if not settings['DESTINATION_POOL_REPLICAS']:
+    if not settings.DESTINATION_POOL_REPLICAS:
       return [self.client_factories[d] for d in destinations]
     else:
       factories = set()
