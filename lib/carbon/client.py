@@ -4,7 +4,6 @@ from six import with_metaclass
 
 from twisted.application.service import Service
 from twisted.internet import reactor
-from twisted.internet.base import BlockingResolver
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.protocols.basic import LineOnlyReceiver, Int32StringReceiver
@@ -13,6 +12,7 @@ from carbon.conf import settings
 from carbon.util import pickle
 from carbon.util import PluginRegistrar, TaggedSeries
 from carbon.util import enableTcpKeepAlive
+from carbon.resolver import setUpRandomResolver
 from carbon import instrumentation, log, pipeline, state
 
 try:
@@ -34,8 +34,6 @@ try:
 except ImportError:
     setUpRandomResolver = None
 
-
-resolver = BlockingResolver()
 
 SEND_QUEUE_LOW_WATERMARK = settings.MAX_QUEUE_SIZE * settings.QUEUE_LOW_WATERMARK_PCT
 
@@ -225,7 +223,6 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
     self.router = router
     self.destinationName = ('%s:%d:%s' % destination).replace('.', '_')
     self.host, self.port, self.carbon_instance = destination
-    self.resolved_host = self.host
     self.addr = (self.host, self.port)
     self.started = False
     # This factory maintains protocol state across reconnects
