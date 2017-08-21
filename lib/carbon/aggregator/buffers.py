@@ -73,6 +73,7 @@ class MetricBuffer:
         buffer.mark_inactive()
 
       if buffer.interval < age_threshold:
+        log.debug("Aggregated %s datapoints at %s for %s" % (len(buffer.values), buffer.interval, self.metric_path))
         del self.interval_buffers[buffer.interval]
         if not self.interval_buffers:
           self.close()
