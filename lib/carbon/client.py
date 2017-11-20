@@ -567,16 +567,25 @@ class CarbonClientManager(Service):
 
   def getFactories(self, metric):
     destinations = self.getDestinations(metric)
+    factories = set()
+
     if not settings.DESTINATION_POOL_REPLICAS:
-      return [self.client_factories[d] for d in destinations]
+      # Simple case, with only one replica per destination.
+      for d in destinations:
+        # If we can't find it, we add to the 'fake' factory / buffer.
+        factories.add(self.client_factories.get(d))
     else:
-      factories = set()
+      # Here we might have multiple replicas per destination.
       for d in destinations:
         if d is None:
-          factories.add(self.client_factories[d])
+          # d == None means there are no destinations currently available, so
+          # we just put the data into our fake factory / buffer.
+          factories.add(self.client_factories[None])
         else:
-          factories.add(min(self.pooled_factories[d[0:2]], key=lambda f: f.queueSize))
-      return factories
+          # Else we take the replica with the smallest queue size.
+          key = d[0:2]  # Take only host:port, not instance.
+          factories.add(min(self.pooled_factories[key], key=lambda f: f.queueSize))
+    return factories
 
   def sendDatapoint(self, metric, datapoint):
     for factory in self.getFactories(metric):
