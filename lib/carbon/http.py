@@ -4,6 +4,8 @@ from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implements
 
+from carbon import log
+
 try:
   from urllib import urlencode
 except ImportError:
@@ -63,6 +65,7 @@ def httpRequest(url, values=None, headers=None, method='POST'):
 
   def handle_response(response):
     d = defer.Deferred()
+    d.addErrback(log.err)
     response.deliverBody(SimpleReceiver(response, d))
     return d
 

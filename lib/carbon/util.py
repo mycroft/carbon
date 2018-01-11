@@ -16,6 +16,7 @@ from twisted.internet import defer
 from twisted.python.util import initgroups
 from twisted.scripts.twistd import runApp
 from carbon.log import setDebugEnabled
+from carbon import log
 
 # BytesIO is needed on py3 as StringIO does not operate on byte input anymore
 # We could use BytesIO on py2 as well but it is slower than StringIO
@@ -289,6 +290,7 @@ class TokenBucket(object):
       return False
 
     d = defer.Deferred()
+    d.addErrback(log.err)
 
     if cost <= self.tokens:
       self._tokens -= cost
