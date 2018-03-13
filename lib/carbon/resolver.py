@@ -6,6 +6,7 @@ from twisted.internet._resolver import GAIResolver
 from twisted.internet.defer import Deferred
 from twisted.internet.address import IPv4Address
 from twisted.internet.interfaces import IResolverSimple, IResolutionReceiver
+from twisted.internet.error import DNSLookupError
 
 # Inspired from /twisted/internet/_resolver.py
 
