@@ -79,7 +79,7 @@ def read(fname):
 try:
     setup(
         name='carbon',
-        version='1.2.0-criteo4',
+        version='1.2.0-criteo6',
         url='http://graphiteapp.org/',
         author='Chris Davis',
         author_email='chrismd@gmail.com',
