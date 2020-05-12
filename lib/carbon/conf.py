@@ -124,11 +124,17 @@ defaults = dict(
   METRIC_CLIENT_IDLE_TIMEOUT=None,
   CACHE_METRIC_NAMES_MAX=0,
   CACHE_METRIC_NAMES_TTL=0,
+<<<<<<< HEAD
   RAVEN_DSN=None,
   PICKLE_RECEIVER_MAX_LENGTH=2**20,
   ENABLE_TRAFFIC_SHAPING=False,
   TRAFFIC_SHAPING_RATE=1024,
   TRAFFIC_SHAPING_MAX_BURST=5*1024,
+=======
+  USE_PROMETHEUS=False,
+  SCRAPE_INTERFACE='0.0.0.0',
+  SCRAPE_PORT=8080
+>>>>>>> 6261413... Added a way to serve a /metrics to be scraped
 )
 
 
@@ -346,7 +352,6 @@ class CarbonCacheOptions(usage.Options):
         pidfile = self.parent["pidfile"]
         program = settings["program"]
         instance = self["instance"]
-
         if action == "stop":
             if not exists(pidfile):
                 print("Pidfile %s does not exist" % pidfile)
