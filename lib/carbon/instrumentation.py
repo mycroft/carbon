@@ -25,7 +25,7 @@ lastUsageTime = time.time()
 # more consistent, and make room for frontend metrics.
 # metric_prefix = "Graphite.backend.%(program)s.%(instance)s." % settings
 
-DATAPOINTS_RECEIVED = Counter('datapoints_received_total', 'count of datapoint received by carbon agent')
+DATAPOINTS_RECEIVED = Counter('carbon_datapoints_received_total', 'count of datapoint received by carbon agent')
 
 def increment(stat, increase=1):
   try:
@@ -239,5 +239,8 @@ from carbon.aggregator.buffers import BufferManager  # NOQA
 =======
 from carbon import state, events, cache
 from carbon.aggregator.buffers import BufferManager
+<<<<<<< HEAD
 
 >>>>>>> 6261413... Added a way to serve a /metrics to be scraped
+=======
+>>>>>>> 652232c... added carbon_ prefix for metricsReceived
