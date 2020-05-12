@@ -568,3 +568,8 @@ MAX_AGGREGATION_INTERVALS = 5
 
 # You can optionally set a ttl to this cache.
 # CACHE_METRIC_NAMES_TTL=600
+
+# Set this to True to enable /metrics endpoint
+# use SCRAPE_INTERFACE and SCRAPE_PORT to choose where
+# this endpoint will bind
+# USE_PROMETHEUS = False

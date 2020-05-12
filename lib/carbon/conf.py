@@ -100,6 +100,9 @@ defaults = dict(
   METRIC_CLIENT_IDLE_TIMEOUT=None,
   CACHE_METRIC_NAMES_MAX=0,
   CACHE_METRIC_NAMES_TTL=0,
+  USE_PROMETHEUS=False,
+  SCRAPE_INTERFACE='0.0.0.0',
+  SCRAPE_PORT=8080
 )
 
 
@@ -314,7 +317,6 @@ class CarbonCacheOptions(usage.Options):
         pidfile = self.parent["pidfile"]
         program = settings["program"]
         instance = self["instance"]
-
         if action == "stop":
             if not exists(pidfile):
                 print "Pidfile %s does not exist" % pidfile

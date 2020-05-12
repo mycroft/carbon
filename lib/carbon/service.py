@@ -19,11 +19,17 @@ from twisted.application.internet import TCPServer, TCPClient
 from twisted.internet.protocol import ServerFactory
 from twisted.python.components import Componentized
 from twisted.python.log import ILogObserver
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.resource import Resource
+from prometheus_client.twisted import MetricsResource
+
 # Attaching modules to the global state module simplifies import order hassles
 from carbon import state, events, instrumentation, util
 from carbon.exceptions import CarbonConfigException
 from carbon.log import carbonLogObserver
 from carbon.pipeline import Processor, run_pipeline, run_pipeline_generated
+from carbon.instrumentation import CarbonMetricsCollector
 state.events = events
 state.instrumentation = instrumentation
 
@@ -59,13 +65,19 @@ def createBaseService(config, settings):
       from carbon.regexlist import WhiteList, BlackList
       WhiteList.read_from(settings.whitelist)
       BlackList.read_from(settings.blacklist)
-
     # Instantiate an instrumentation service that will record metrics about
     # this service.
+    
     from carbon.instrumentation import InstrumentationService
 
     service = InstrumentationService()
     service.setServiceParent(root_service)
+    if settings.USE_PROMETHEUS:
+      CarbonMetricsCollector.register()
+      root = Resource()
+      root.putChild(b'metrics', MetricsResource())
+      factory = Site(root)
+      reactor.listenTCP(settings.SCRAPE_PORT, factory)
 
     return root_service
 
