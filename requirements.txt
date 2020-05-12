@@ -2,4 +2,8 @@ Twisted>=13.2.0
 git+git://github.com/graphite-project/whisper.git#egg=whisper
 txAMQP
 cachetools
+<<<<<<< HEAD
 urllib3
+=======
+prometheus_client
+>>>>>>> 6261413... Added a way to serve a /metrics to be scraped
