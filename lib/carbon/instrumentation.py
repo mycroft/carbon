@@ -152,7 +152,7 @@ def recordMetrics():
   record('metricsReceived', myStats.get('metricsReceived', 0))
   record('blacklistMatches', myStats.get('blacklistMatches', 0))
   record('whitelistRejects', myStats.get('whitelistRejects', 0))
-  record('cpuUsage',  getCpuUsage())
+  record('cpuUsage', getCpuUsage())
   DATAPOINTS_RECEIVED.inc(myStats.get('metricsReceived', 0))
 
   # And here preserve count of messages received in the prior periiod
