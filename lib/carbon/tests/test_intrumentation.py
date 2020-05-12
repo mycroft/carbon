@@ -22,4 +22,4 @@ class TestPrometheusMetrics(TestCase):
     self.assertCurrentDPValue(2)
 
   def assertCurrentDPValue(self, value):
-    self.assertEqual(value, REGISTRY.get_sample_value('datapoints_received_total'))
+    self.assertEqual(value, REGISTRY.get_sample_value('carbon_datapoints_received_total'))
