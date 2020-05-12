@@ -234,14 +234,6 @@ class CarbonMetricsCollector:
 
 
 # Avoid import circularities
-<<<<<<< HEAD
 from carbon import state, events, cache  # NOQA
 from carbon.aggregator.buffers import BufferManager  # NOQA
-=======
-from carbon import state, events, cache
-from carbon.aggregator.buffers import BufferManager
-<<<<<<< HEAD
 
->>>>>>> 6261413... Added a way to serve a /metrics to be scraped
-=======
->>>>>>> 652232c... added carbon_ prefix for metricsReceived
