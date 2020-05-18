@@ -92,7 +92,7 @@ class CarbonLineClientProtocolTest(TestCase):
     expected_line_to_send = "foo.bar %s 1000000000" % now_ms
 
     self.protocol._sendDatapointsNow([datapoint])
-    self.protocol.sendLine.assert_called_once_with(expected_line_to_send)
+    self.protocol.sendLine.assert_called_once_with(expected_line_to_send.encode("utf-8"))
 
 
 class CarbonClientFactoryTest(TestCase):
