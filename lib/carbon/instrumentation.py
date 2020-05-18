@@ -7,7 +7,7 @@ from twisted.application.service import Service
 from twisted.internet.task import LoopingCall
 from carbon.conf import settings
 
-from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily, REGISTRY
+from prometheus_client.core import GaugeMetricFamily, REGISTRY
 from prometheus_client import Counter
 
 stats = {}
@@ -25,7 +25,11 @@ lastUsageTime = time.time()
 # more consistent, and make room for frontend metrics.
 # metric_prefix = "Graphite.backend.%(program)s.%(instance)s." % settings
 
-DATAPOINTS_RECEIVED = Counter('carbon_datapoints_received_total', 'count of datapoint received by carbon agent')
+DATAPOINTS_RECEIVED = Counter(
+    'carbon_datapoints_received_total',
+    'count of datapoint received by carbon agent'
+)
+
 
 def increment(stat, increase=1):
   try:
@@ -213,19 +217,28 @@ class InstrumentationService(Service):
 
 
 class CarbonMetricsCollector:
-  """Custom collector to enable scrapping generic metrics by prometheus, needs to be explicitly registered.
-  It only collect metrics that are not cleared by recordMetrics
+  """Custom collector to enable scrapping generic metrics by prometheus,
+needs to be explicitly registered. It only collect metrics that are not cleared by recordMetrics
   """
   def collect(self):
     metrics = [
-        GaugeMetricFamily('active_connections_total', 'active connection of carbon agent', value=len(state.connectedMetricReceiverProtocols)),
+        GaugeMetricFamily(
+            'active_connections_total', 'active connection of carbon agent',
+            value=len(state.connectedMetricReceiverProtocols)
+        ),
         GaugeMetricFamily('cpu_usage_percent', 'cpu usage of carbon agent', value=getCpuUsage()),
     ]
     try:  # This only works on Linux
-      metrics.append(GaugeMetricFamily('memory_usage_bytes', 'memory usage of carbon agent', value=getMemUsage()))
+      metrics.append(
+        GaugeMetricFamily(
+            'memory_usage_bytes',
+            'memory usage of carbon agent',
+            value=getMemUsage()
+        )
+      )
     except Exception:
       pass
-    
+
     return metrics
 
   @classmethod
@@ -236,4 +249,3 @@ class CarbonMetricsCollector:
 # Avoid import circularities
 from carbon import state, events, cache  # NOQA
 from carbon.aggregator.buffers import BufferManager  # NOQA
-

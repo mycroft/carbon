@@ -67,7 +67,6 @@ def createBaseService(config, settings):
       BlackList.read_from(settings.blacklist)
     # Instantiate an instrumentation service that will record metrics about
     # this service.
-    
     from carbon.instrumentation import InstrumentationService
 
     service = InstrumentationService()

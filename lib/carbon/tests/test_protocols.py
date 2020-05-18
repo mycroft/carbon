@@ -16,6 +16,7 @@ class TestMetricReceiversHandler(TestCase):
 
   def setUp(self):
     super(TestMetricReceiversHandler, self).setUp()
+
     class _FakeService(object):
       def addService(_, __):
         pass

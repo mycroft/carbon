@@ -12,7 +12,6 @@ from carbon.conf import settings
 from carbon.util import pickle
 from carbon.util import PluginRegistrar, TaggedSeries
 from carbon.util import enableTcpKeepAlive
-from carbon.resolver import setUpRandomResolver
 from carbon import instrumentation, log, pipeline, state
 
 try:
@@ -280,17 +279,6 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
   def startConnecting(self):  # calling this startFactory yields recursion problems
     self.started = True
 
-    if settings.DESTINATION_POOL_REPLICAS:
-      # If we decide to open multiple TCP connection to a replica, we probably
-      # want to try to also load-balance accross hosts.
-      d = resolver.getHostByName(self.host, timeout=1)
-
-      def _store_result(result):
-        log.clients("Resolved %s to %s" % (self.host, result))
-        self.resolved_host = result
-
-      d.addCallback(_store_result)
-      d.addErrback(log.err)
     if settings['DESTINATION_TRANSPORT'] == "ssl":
        if not SSL or not ssl:
            print("SSL destination transport request, but no Python OpenSSL available.")
@@ -306,14 +294,12 @@ class CarbonClientFactory(with_metaclass(PluginRegistrar, ReconnectingClientFact
        # Twisted 14 introduced this function, it might not be around on older installs.
        if hasattr(ssl, "optionsForClientTLS"):
            from six import u
-           client = ssl.optionsForClientTLS(u(self.resolved_host), authority)
+           client = ssl.optionsForClientTLS(u(self.host), authority)
        else:
            client = CAReplaceClientContextFactory(settings['DESTINATION_SSL_CA'])
-       self.connector = reactor.connectSSL(self.resolved_host, self.port, self, client)
+       self.connector = reactor.connectSSL(self.host, self.port, self, client)
     else:
-      self.connector = reactor.connectTCP(self.resolved_host, self.port, self)
-    
-    
+      self.connector = reactor.connectTCP(self.host, self.port, self)
 
   def stopConnecting(self):
     self.started = False

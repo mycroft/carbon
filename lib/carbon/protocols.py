@@ -3,11 +3,9 @@ import socket
 import sys
 
 from twisted.internet.protocol import ServerFactory, DatagramProtocol
-from twisted.application.internet import TCPServer, UDPServer
 from twisted.application import service
 from twisted.internet.error import ConnectionDone
 from twisted.internet import reactor, tcp, udp
-from twisted.internet.protocol import ServerFactory, DatagramProtocol
 from twisted.protocols.basic import LineOnlyReceiver, Int32StringReceiver
 from twisted.protocols.policies import TimeoutMixin
 from twisted.protocols.htb import ShapedProtocolFactory, Bucket, HierarchicalBucketFilter
@@ -32,6 +30,8 @@ class _FilterByPeer(HierarchicalBucketFilter):
 
 
 _HtbFilter = None
+
+
 def HtbFilter():
   if not settings.ENABLE_TRAFFIC_SHAPING:
     return None
