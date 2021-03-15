@@ -8,7 +8,7 @@ from twisted.internet.task import LoopingCall
 from carbon.conf import settings
 
 from prometheus_client.core import GaugeMetricFamily, REGISTRY
-from prometheus_client import Counter
+from prometheus_client import Counter, Gauge
 
 stats = {}
 prior_stats = {}
@@ -30,6 +30,60 @@ DATAPOINTS_RECEIVED = Counter(
     'count of datapoint received by carbon agent'
 )
 
+METRICS_CREATED = Counter(
+    'carbon_metrics_created',
+    'count of metrics created by carbon agent'
+)
+
+CACHE_SIZE = Gauge(
+    'carbon_cache_size',
+    'cache size'
+)
+
+CACHE_QUEUES = Gauge(
+    'carbon_cache_queues',
+    'cache queues'
+)
+
+DATAPOINTS_UPDATED_OPERATIONS = Counter(
+    'carbon_datapoints_updated_operations',
+    'carbon datapoints updated operations'
+)
+
+DATAPOINTS_COMMITED = Counter(
+    'carbon_datapoints_commited',
+    'carbon commited datapoints'
+)
+
+METRICS_DROPPED_CREATES = Counter(
+    'carbon_dropped_created',
+    'carbon dropped created metrics'
+)
+
+ERRORS = Counter(
+    'carbon_errors',
+    'carbon number of errors'
+)
+
+CACHE_QUERIES = Counter(
+    'carbon_cache_queries',
+    'carbon cache queries'
+)
+
+CACHE_BULK_QUERIES = Counter(
+    'carbon_cache_bulk_queries',
+    'carbon cache bulk queries'
+)
+
+CACHE_OVERFLOW = Counter(
+    'carbon_cache_overflow',
+    'carbon cache overflow'
+)
+
+ACTIVE_CONNECTIONS = Gauge(
+    'carbon_active_connections',
+    'carbon active connections'
+)
 
 def increment(stat, increase=1):
   try:
@@ -105,7 +159,9 @@ def recordMetrics():
     cache_size = cache.MetricCache().size
     cache_queues = len(cache.MetricCache())
     record('cache.size', cache_size)
+    CACHE_SIZE.set(cache_size)
     record('cache.queues', cache_queues)
+    CACHE_QUEUES.set(cache_queues)
 
     if updateTimes:
       avgUpdateTime = sum(updateTimes) / len(updateTimes)
@@ -120,13 +176,21 @@ def recordMetrics():
       record('cache.bulk_queries_average_size', avgBulkSize)
 
     record('updateOperations', len(updateTimes))
+    DATAPOINTS_UPDATED_OPERATIONS.inc(len(updateTimes))
     record('committedPoints', committedPoints)
+    DATAPOINTS_COMMITED.inc(committedPoints)
     record('creates', creates)
+    METRICS_CREATED.inc(creates)
     record('droppedCreates', droppedCreates)
+    METRICS_DROPPED_CREATES.inc(droppedCreates)
     record('errors', errors)
+    ERRORS.inc(errors)
     record('cache.queries', cacheQueries)
+    CACHE_QUERIES.inc(cacheQueries)
     record('cache.bulk_queries', cacheBulkQueries)
+    CACHE_BULK_QUERIES.inc(cacheBulkQueries)
     record('cache.overflow', cacheOverflow)
+    CACHE_OVERFLOW.inc(cacheOverflow)
 
   # aggregator metrics
   elif 'aggregator' in settings.program:
@@ -154,11 +218,12 @@ def recordMetrics():
 
   # common metrics
   record('activeConnections', len(state.connectedMetricReceiverProtocols))
+  ACTIVE_CONNECTIONS.set(len(state.connectedMetricReceiverProtocols))
   record('metricsReceived', myStats.get('metricsReceived', 0))
+  DATAPOINTS_RECEIVED.inc(myStats.get('metricsReceived', 0))
   record('blacklistMatches', myStats.get('blacklistMatches', 0))
   record('whitelistRejects', myStats.get('whitelistRejects', 0))
   record('cpuUsage', getCpuUsage())
-  DATAPOINTS_RECEIVED.inc(myStats.get('metricsReceived', 0))
 
   # And here preserve count of messages received in the prior period
   myPriorStats['metricsReceived'] = myStats.get('metricsReceived', 0)
