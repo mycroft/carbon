@@ -4,3 +4,4 @@ txAMQP
 cachetools
 urllib3
 prometheus_client
+cryptography==3.1
